@@ -1,0 +1,25 @@
+{
+  "resultSet": {
+    "route": [
+      {
+        "routeColor": null,
+        "frequentService": true,
+        "route": 12,
+        "detour": true,
+        "id": 12,
+        "type": "B",
+        "desc": "12-Barbur\/Sandy Blvd",
+        "routeSortOrder": 1500
+      },
+      {
+        "routeColor": null,
+        "frequentService": true,
+        "route": 15,
+        "id": 15,
+        "type": "B",
+        "desc": "15-Belmont\/NW 23rd",
+        "routeSortOrder": 1800
+      }
+    ]
+  }
+}
