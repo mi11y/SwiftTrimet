@@ -14,6 +14,12 @@ public class ServiceLocator {
         return components
     }
     
+    public static func stops() -> URLComponents {
+        var components = initURLComponents()
+        components.path = "ws/v1/stops"
+        return components
+    }
+    
     private static func initURLComponents() -> URLComponents {
         var components = URLComponents()
         components.scheme = "http"

@@ -12,7 +12,7 @@ public class RouteConfigClient {
         public init() {}
         var json = "true"
         var routes = "12,15"
-        var appID = ProcessInfo.processInfo.environment["TRIMET_API_KEY"]!
+        var appID = "APIKEY"
     }
     
     public init(sessionManager session: Alamofire.Session, queryParameters parameters: RoutesQueryParameters) {
