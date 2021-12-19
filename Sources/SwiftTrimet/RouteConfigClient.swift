@@ -3,10 +3,10 @@ import SwiftyJSON
 import Foundation
 
 public class RouteConfigClient {
-    private let TRIMET_API_URL = "http://developer.trimet.org/ws/v1/routeConfig"
-    private var latestResponse: JSON? = nil
     private let sessionManager: Alamofire.Session
     private var queryParams: RoutesQueryParameters
+    public var onSuccess: ((JSON?) -> Void)?
+    public var onFailure: ((Int?, String?) -> Void)?
     
     public struct RoutesQueryParameters: Encodable {
         public init() {}
@@ -24,32 +24,28 @@ public class RouteConfigClient {
         self.queryParams = params
     }
     
-    public func fetchRoutes() -> JSON? {
-        if let encoded = TRIMET_API_URL.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed),
-            let url = URL(string: encoded) {
-            let request = sessionManager.request(url, parameters: queryParams)
-            request.responseString { response in
-                self.latestResponse = self.handleResponse(response)
-            }
+    public func fetchRoutes() {
+        guard let urlString = ServiceLocator.routeConfig().string else { return }
+        guard let encoded = urlString.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed) else { return }
+        guard let url = URL(string: encoded) else { return }
+                
+        
+        sessionManager.request(url, parameters: queryParams).responseString { response in
+            self.handleResponse(response)
         }
-        return self.latestResponse
     }
-    
-    public func lastResponse() -> JSON? {
-        return self.latestResponse
-    }
-    
-    private func handleResponse(_ response: AFDataResponse<String>) -> JSON? {
-        var parsedJSON: JSON? = nil
+
+    private func handleResponse(_ response: AFDataResponse<String>) -> Void {
         switch response.result {
         case .success(let value):
-            debugPrint(value)
-            parsedJSON = try! JSON(parseJSON: value)
-            debugPrint(parsedJSON!["resultSet"])
+            if let onSuccess = self.onSuccess {
+                onSuccess(JSON(parseJSON: value))
+            }
         case .failure(let error):
-            debugPrint("[TrimetRoutes] ERROR: \(error)")
-            debugPrint(error.errorDescription ?? "[TrimetRoutes] No additional information.")
+            debugPrint(error)
+            if let onFailure = onFailure {
+                onFailure(error.responseCode, error.errorDescription)
+            }
         }
-        return parsedJSON
     }
 }
