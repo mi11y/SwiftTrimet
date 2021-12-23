@@ -1,0 +1,25 @@
+{
+    "resultSet": {
+        "queryTime": "2021-12-19T15:41:18.921-0800",
+        "location": [
+            {
+                "lng": -122.681550763375,
+                "metersDistance": 35,
+                "feetDistance": 115,
+                "dir": "Southbound",
+                "lat": 45.5116447001344,
+                "locid": 7618,
+                "desc": "PSU Urban Center\/SW 5th & Mill MAX Station"
+            },
+            {
+                "lng": -122.682078,
+                "metersDistance": 40,
+                "feetDistance": 134,
+                "dir": "Northbound",
+                "lat": 45.51222,
+                "locid": 10764,
+                "desc": "PSU Urban Center"
+            }
+        ]
+    }
+}

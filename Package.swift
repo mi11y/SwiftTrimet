@@ -32,7 +32,10 @@ let package = Package(
             name: "SwiftTrimetTests",
             dependencies: ["SwiftTrimet", "Alamofire", "SwiftyJSON", "Mocker"],
             resources: [
-                .copy("Resources/TrimetRoutesResponse.json")
+                .copy("Resources/TrimetRoutesResponse.json"),
+                .copy("Resources/TrimetStopsResponse.json"),
+                .copy("Resources/TrimetArrivalsResponse.json"),
+                .copy("Resources/TrimetVehiclesResponse.json")
             ])
     ]
 )

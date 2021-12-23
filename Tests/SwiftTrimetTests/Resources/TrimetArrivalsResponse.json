@@ -1,0 +1,110 @@
+{
+    "resultSet": {
+        "detour": [
+            {
+                "info_link_url": "http:\/\/trimet.org\/health",
+                "end": null,
+                "system_wide_flag": true,
+                "id": 109994,
+                "header_text": "Face masks are required",
+                "system_wide_message": {
+                    "type": "normal"
+                },
+                "begin": 1630530000000,
+                "desc": "Face masks are still required on transit. "
+            },
+            {
+                "route": [
+                    {
+                        "routeColor": "CE0F69",
+                        "frequentService": false,
+                        "route": 194,
+                        "no_service_flag": false,
+                        "id": 194,
+                        "type": "R",
+                        "desc": "Portland Streetcar - A Loop",
+                        "routeSortOrder": 250
+                    },
+                    {
+                        "routeColor": "0093B2",
+                        "frequentService": false,
+                        "route": 195,
+                        "no_service_flag": false,
+                        "id": 195,
+                        "type": "R",
+                        "desc": "Portland Streetcar - B Loop",
+                        "routeSortOrder": 275
+                    }
+                ],
+                "info_link_url": "https:\/\/portlandstreetcar.org\/news\/2020\/03\/streetcar-service-will-reduce-to-20-minute-headways-beginning-march-24",
+                "end": null,
+                "system_wide_flag": false,
+                "id": 74434,
+                "header_text": "",
+                "begin": 1585093573281,
+                "desc": "Streetcar has reduced regular weekday service to every 20 minutes between about 5:30 a.m. and about 11:30 p.m. For more info:"
+            }
+        ],
+        "arrival": [
+            {
+                "scheduled": 1632978419658,
+                "shortSign": "Portland Streetcar NS to Northrup and 14th",
+                "estimated": 1632978419658,
+                "detoured": false,
+                "dir": 0,
+                "blockID": 37,
+                "route": 193,
+                "nextBusFeed": true,
+                "fullSign": "Portland Streetcar NS to Northrup and 14th",
+                "streetCar": true,
+                "id": "370_79619_29",
+                "newTrip": false,
+                "locid": 10764,
+                "status": "estimated"
+            },
+            {
+                "scheduled": 1632978957174,
+                "shortSign": "Portland Streetcar NS to NW 23",
+                "estimated": 1632978957174,
+                "detoured": false,
+                "dir": 0,
+                "blockID": 77,
+                "route": 193,
+                "nextBusFeed": true,
+                "fullSign": "Portland Streetcar NS to NW 23",
+                "streetCar": true,
+                "id": "771_80157_29",
+                "newTrip": false,
+                "locid": 10764,
+                "status": "estimated"
+            },
+            {
+                "scheduled": 1632979794133,
+                "shortSign": "Portland Streetcar NS to NW 23",
+                "estimated": 1632979794133,
+                "detoured": false,
+                "dir": 0,
+                "blockID": 79,
+                "route": 193,
+                "nextBusFeed": true,
+                "fullSign": "Portland Streetcar NS to NW 23",
+                "streetCar": true,
+                "id": "792_80994_29",
+                "newTrip": false,
+                "locid": 10764,
+                "status": "estimated"
+            }
+        ],
+        "queryTime": 1632978362824,
+        "location": [
+            {
+                "lng": -122.682078,
+                "passengerCode": "E",
+                "id": 10764,
+                "dir": "Northbound",
+                "lat": 45.51222,
+                "desc": "PSU Urban Center"
+            }
+        ]
+    }
+}
