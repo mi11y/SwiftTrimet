@@ -1,3 +1,4 @@
+
 import XCTest
 import Alamofire
 import Foundation
@@ -6,35 +7,35 @@ import SwiftyJSON
 
 @testable import SwiftTrimet
 
-class RouteConfigClientTests: XCTestCase {
+class VehiclesClientTests: XCTestCase {
     
     func testConformsToTrimetClient() {
         let expectation = self.expectation(description: "It conforms to TrimetClient protocol")
         
-        if RouteConfigClient.self is TrimetClient.Type {
+        if VehiclesClient.self is TrimetClient.Type {
             expectation.fulfill()
         }
         
         wait(for: [expectation], timeout: 1.0)
     }
     
-    func testConformsToRouter() {
-        let expectation = self.expectation(description: "It conforms to Router protocol")
+    func testConformsToVehicleClient() {
+        let expectation = self.expectation(description: "It conforms to TrimetVehicleClient protocol")
         
-        if RouteConfigClient.self is TrimetRouteClient.Type {
+        if VehiclesClient.self is TrimetVehicleClient.Type {
             expectation.fulfill()
         }
         
         wait(for: [expectation], timeout: 1.0)
     }
     
-    func testFetchRoutesOnSuccess() {
+    func testFetchVehiclesOnSuccess() {
         let session = mockAPIResponse(MockConfigration())
 
         let expectation = self.expectation(description: "The correct endpoint was called")
-        guard let expectedJSON = try? JSON(data: TestData.routesJSON.data) else { XCTFail("Failed to parse test JSON"); return }
+        guard let expectedJSON = try? JSON(data: TestData.vehiclesJSON.data) else { XCTFail("Failed to parse test JSON"); return }
         
-        let client = RouteConfigClient(
+        let client = VehiclesClient(
             sessionManager: session,
             queryParameters: initQueryParameters()
         )
@@ -44,7 +45,7 @@ class RouteConfigClientTests: XCTestCase {
             expectation.fulfill()
         }
         client.onFailure = { (_: Int?, _: String?) -> Void in
-            XCTFail()
+            XCTFail("onFailuer handler was not supposed to be called")
         }
         client.fetch()
 
@@ -52,58 +53,47 @@ class RouteConfigClientTests: XCTestCase {
         
     }
     
-    func testFetchRoutesOnError() {
+    func testFetchVehiclesOnError() {
         var mockConfig = MockConfigration()
         mockConfig.statusCode = 400
         mockConfig.payload = try! JSONEncoder().encode("Bad Request")
         mockConfig.error = TestAPIError.message("Bad Request")
         let session = mockAPIResponse(mockConfig)
-
         
         let expectation = self.expectation(description: "onError handler called")
-        let client = RouteConfigClient(
-            sessionManager: session,
-            queryParameters: initQueryParameters()
-        )
+        let client = VehiclesClient(sessionManager: session, queryParameters: initQueryParameters())
         client.onSuccess = { (_: JSON?) -> Void in
-            XCTFail()
+            XCTFail("onSuccess should not have been called")
         }
         client.onFailure = { (_: Int?, _: String? ) -> Void in
             expectation.fulfill()
         }
         client.fetch()
-
-        wait(for: [expectation], timeout: 2.0)
         
+        wait(for: [expectation], timeout: 2.0)
     }
-    
     
     func testSetQueryParameters() {
         var config = MockConfigration()
-        config.routeNumbers = "44,128"
+        config.routes = "63"
         
-        var queryParams = initQueryParameters()
-        queryParams.routes = config.routeNumbers
+        var queryParameters = initQueryParameters()
+        queryParameters.routes = "63"
         
         let session = mockAPIResponse(config)
-
-        let expectation = self.expectation(description: "The correct query parameters were used.")
-        guard let expectedJSON = try? JSON(data: TestData.routesJSON.data) else {
-            XCTFail("Failed to parse test JSON"); return
-        }
         
-        let client = RouteConfigClient(
-            sessionManager: session,
-            queryParameters: RouteQueryParameters()
-        )
+        let expectation = self.expectation(description: "The correct query parameters were used.")
+        guard let expectedJSON = try? JSON(data: TestData.vehiclesJSON.data) else { return XCTFail("Failed to parse test JSON"); return }
+        
+        let client = VehiclesClient(sessionManager: session, queryParameters: VehicleQueryParameters())
         client.onSuccess = { (actualResponse: JSON?) -> Void in
             XCTAssertNotNil(actualResponse)
             XCTAssertEqual(actualResponse, expectedJSON)
             expectation.fulfill()
         }
-        client.setQueryParameters(queryParams)
+        client.setQueryParameters(queryParameters)
         client.fetch()
-
+        
         wait(for: [expectation], timeout: 2.0)
     }
     
@@ -115,11 +105,10 @@ class RouteConfigClientTests: XCTestCase {
     
     private struct MockConfigration {
         var statusCode = 200
-        var payload: Data = TestData.routesJSON.data
-        var routeNumbers = "12,15"
+        var payload: Data = TestData.vehiclesJSON.data
+        var routes = "20,15"
         var error: TestAPIError? = nil
     }
-
     
     private func mockAPIResponse(_ config: MockConfigration) -> Session {
         
@@ -160,18 +149,18 @@ class RouteConfigClientTests: XCTestCase {
     }
     
     private func createURLComponents(_ config: MockConfigration) -> URLComponents {
-        var urlComponenets: URLComponents = ServiceLocator.routeConfig()
+        var urlComponenets: URLComponents = ServiceLocator.vehicles()
         urlComponenets.queryItems = [
-            URLQueryItem(name: "appID", value: "foo"),
-            URLQueryItem(name: "json", value: "true"),
-            URLQueryItem(name: "routes", value: config.routeNumbers)
+            URLQueryItem(name: "appID", value: "APIKEY"),
+            URLQueryItem(name: "routes", value: config.routes)
         ]
         return urlComponenets
     }
     
-    private func initQueryParameters() -> RouteQueryParameters {
-        var newParameters = RouteQueryParameters()
-        newParameters.appID = "foo"
+    private func initQueryParameters() -> VehicleQueryParameters {
+        var newParameters = VehicleQueryParameters()
+        newParameters.appID = "APIKEY"
+        newParameters.routes = "20,15"
         return newParameters
     }
     

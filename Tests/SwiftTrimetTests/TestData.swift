@@ -8,7 +8,10 @@
 import Foundation
 
 public final class TestData {
-    public static let exampleJSON: URL = Bundle.module.url(forResource: "TrimetRoutesResponse", withExtension: "json")!
+    public static let routesJSON: URL = Bundle.module.url(forResource: "TrimetRoutesResponse", withExtension: "json")!
+    public static let stopsJSON: URL = Bundle.module.url(forResource: "TrimetRoutesResponse", withExtension: "json")!
+    public static let arrivalsJSON: URL = Bundle.module.url(forResource: "TrimetArrivalsResponse", withExtension: "json")!
+    public static let vehiclesJSON: URL = Bundle.module.url(forResource: "TrimetVehiclesResponse", withExtension: "json")!
 }
 
 internal extension URL {
