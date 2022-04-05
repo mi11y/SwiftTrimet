@@ -1,44 +1,40 @@
 
 import XCTest
-import Alamofire
 import Foundation
-import Mocker
 import SwiftyJSON
+import SwiftHelpers
 
 @testable import SwiftTrimet
 
 class ArrivalsClientTests: XCTestCase {
     
-    func testConformsToTrimetClient() {
-        let expectation = self.expectation(description: "It conforms to TrimetClient protocol")
+    func testConformsToHTTPClient() {
+        let expectation = self.expectation(description: "It conforms to HTTPClient protocol")
         
-        if ArrivalsClient.self is TrimetClient.Type {
+        if ArrivalsClient.self is HTTPClient.Type {
             expectation.fulfill()
         }
         
         wait(for: [expectation], timeout: 1.0)
     }
     
-    func testConformsToArrivalClient() {
-        let expectation = self.expectation(description: "It conforms to TrimetArrivalClient protocol")
-        
-        if ArrivalsClient.self is TrimetArrivalClient.Type {
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 1.0)
-    }
     
     func testFetchArrivalsOnSuccess() {
-        let session = mockAPIResponse(MockConfigration())
+        let mockConfiguration = MockConfiguration.init()
+        mockConfiguration.setStatusCode(200)
+        mockConfiguration.setDataResponse(TestData.arrivalsJSON.data)
+        mockConfiguration.setAPIURL(ServiceLocator.arrivals())
+        mockConfiguration.ignoreQuery = true //TODO: Remove the use of ignoreQuery for more a durable test.
+        let session = mockConfiguration.mockAPIResponse()
 
         let expectation = self.expectation(description: "The correct endpoint was called")
         guard let expectedJSON = try? JSON(data: TestData.arrivalsJSON.data) else { XCTFail("Failed to parse test JSON"); return }
-        
+
         let client = ArrivalsClient(
             sessionManager: session,
             queryParameters: initQueryParameters()
         )
+        
         client.onSuccess = { (actualResponse: JSON?) -> Void in
             XCTAssertNotNil(actualResponse)
             XCTAssertEqual(actualResponse, expectedJSON)
@@ -50,19 +46,21 @@ class ArrivalsClientTests: XCTestCase {
         client.fetch()
 
         wait(for: [expectation], timeout: 2.0)
-        
     }
     
     
     func testFetchArrivalsOnError() {
-        var mockConfig = MockConfigration()
-        mockConfig.statusCode = 400
-        mockConfig.payload = try! JSONEncoder().encode("Bad Request")
-        mockConfig.error = TestAPIError.message("Bad Request")
-        let session = mockAPIResponse(mockConfig)
+        let mockConfiguration = MockConfiguration.init()
+        mockConfiguration.setStatusCode(400)
+        mockConfiguration.setError("Bad Request")
+        mockConfiguration.setDataResponse(TestData.arrivalsJSON.data)
+        mockConfiguration.setAPIURL(ServiceLocator.arrivals())
+        let session = mockConfiguration.mockAPIResponse()
         
         let expectation = self.expectation(description: "onError handler called")
-        let client = ArrivalsClient(sessionManager: session, queryParameters: initQueryParameters())
+        let client = ArrivalsClient(
+            sessionManager: session,
+            queryParameters: initQueryParameters())
         client.onSuccess = { (_: JSON?) -> Void in
             XCTFail("onSuccess should not have been called")
         }
@@ -72,115 +70,14 @@ class ArrivalsClientTests: XCTestCase {
         client.fetch()
         
         wait(for: [expectation], timeout: 2.0)
+        
     }
     
-    func testSetQueryParameters() {
-        var config = MockConfigration()
-        config.locations = ["1","2","3"]
-        
-        var queryParameters = initQueryParameters()
-        queryParameters.locIDs = config.locIDs()
-        
-        let session = mockAPIResponse(config)
-        
-        let expectation = self.expectation(description: "The correct query parameters were used.")
-        guard let expectedJSON = try? JSON(data: TestData.arrivalsJSON.data) else { return XCTFail("Failed to parse test JSON"); return }
-        
-        let client = ArrivalsClient(sessionManager: session, queryParameters: ArrivalQueryParameters())
-        client.onSuccess = { (actualResponse: JSON?) -> Void in
-            XCTAssertNotNil(actualResponse)
-            XCTAssertEqual(actualResponse, expectedJSON)
-            expectation.fulfill()
-        }
-        client.setQueryParameters(queryParameters)
-        client.fetch()
-        
-        wait(for: [expectation], timeout: 2.0)
-    }
     
-    // Test Helpers
-    
-    private enum TestAPIError: Error {
-        case message(String)
-    }
-    
-    private struct MockConfigration {
-        var statusCode = 200
-        var payload: Data = TestData.arrivalsJSON.data
-        var locations: [String] = ["10764","7618"]
-        var error: TestAPIError? = nil
-        
-        func locIDs() -> String {
-            return locations.joined(separator: ",")
-        }
-    }
-    
-    private func mockAPIResponse(_ config: MockConfigration) -> Session {
-        
-        let urlComponents = createURLComponents(config)
-        mockSessionWithComponents(config, urlComponents)
-        
-        let configuration = URLSessionConfiguration.af.default
-        configuration.protocolClasses = [MockingURLProtocol.self]
-        return Alamofire.Session(configuration: configuration)
-    }
-    
-    private func mockSessionWithComponents(_ config: MockConfigration, _ urlComponenets: URLComponents) {
-        let apiEndpoint = createURLFromComponents(urlComponenets)
-        
-        if let error = config.error {
-            Mock(
-                url: apiEndpoint,
-                ignoreQuery: false,
-                dataType: .json,
-                statusCode: config.statusCode,
-                data: [
-                    .get: config.payload
-                ],
-                requestError: error
-            ).register()
-        } else {
-            Mock(
-                url: apiEndpoint,
-                ignoreQuery: false,
-                dataType: .json,
-                statusCode: config.statusCode,
-                data: [
-                    .get: config.payload
-                ]
-            ).register()
-        }
-
-    }
-    
-    private func createURLComponents(_ config: MockConfigration) -> URLComponents {
-        var urlComponenets: URLComponents = ServiceLocator.arrivals()
-        urlComponenets.queryItems = [
-            URLQueryItem(name: "appID", value: "APIKEY"),
-            URLQueryItem(name: "locIDs", value: config.locIDs())
+    private func initQueryParameters() -> [String:String] {
+        return [
+            "appID": "APIKEY",
+            "locIDs": "10764,7618"
         ]
-        return urlComponenets
-    }
-    
-    
-    private func initQueryParameters() -> ArrivalQueryParameters {
-        var newParameters = ArrivalQueryParameters()
-        newParameters.appID = "APIKEY"
-        return newParameters
-    }
-    
-    private func createURLFromComponents(_ components: URLComponents) -> URL {
-        let characterSet = NSCharacterSet(charactersIn: ",").inverted
-        return URL(
-            string: components.string!.addingPercentEncoding(
-                withAllowedCharacters: characterSet
-            )!
-        )!
-    }
-    
-    private func initAlamofireSessionManager() -> Session {
-        let configuration = URLSessionConfiguration.af.default
-        configuration.protocolClasses = [MockingURLProtocol.self]
-        return Alamofire.Session(configuration: configuration)
     }
 }
