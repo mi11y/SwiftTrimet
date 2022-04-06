@@ -1,28 +1,17 @@
 
 import XCTest
-import Alamofire
 import Foundation
-import Mocker
 import SwiftyJSON
+import SwiftHelpers
 
 @testable import SwiftTrimet
 
 class VehiclesClientTests: XCTestCase {
     
     func testConformsToTrimetClient() {
-        let expectation = self.expectation(description: "It conforms to TrimetClient protocol")
+        let expectation = self.expectation(description: "It conforms to HTTPClient protocol")
         
-        if VehiclesClient.self is TrimetClient.Type {
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 1.0)
-    }
-    
-    func testConformsToVehicleClient() {
-        let expectation = self.expectation(description: "It conforms to TrimetVehicleClient protocol")
-        
-        if VehiclesClient.self is TrimetVehicleClient.Type {
+        if VehiclesClient.self is HTTPClient.Type {
             expectation.fulfill()
         }
         
@@ -30,22 +19,28 @@ class VehiclesClientTests: XCTestCase {
     }
     
     func testFetchVehiclesOnSuccess() {
-        let session = mockAPIResponse(MockConfigration())
+        let mockConfiguration = MockConfiguration.init()
+        mockConfiguration.setStatusCode(200)
+        mockConfiguration.setDataResponse(TestData.vehiclesJSON.data)
+        mockConfiguration.setAPIURL(ServiceLocator.vehicles())
+        mockConfiguration.ignoreQuery = true //TODO: Remove the use of ignoreQuery for more a durable test.
+        let session = mockConfiguration.mockAPIResponse()
 
         let expectation = self.expectation(description: "The correct endpoint was called")
         guard let expectedJSON = try? JSON(data: TestData.vehiclesJSON.data) else { XCTFail("Failed to parse test JSON"); return }
-        
+
         let client = VehiclesClient(
             sessionManager: session,
             queryParameters: initQueryParameters()
         )
+        
         client.onSuccess = { (actualResponse: JSON?) -> Void in
             XCTAssertNotNil(actualResponse)
             XCTAssertEqual(actualResponse, expectedJSON)
             expectation.fulfill()
         }
         client.onFailure = { (_: Int?, _: String?) -> Void in
-            XCTFail("onFailuer handler was not supposed to be called")
+            XCTFail("onFailure handler was not supposed to be called")
         }
         client.fetch()
 
@@ -54,14 +49,17 @@ class VehiclesClientTests: XCTestCase {
     }
     
     func testFetchVehiclesOnError() {
-        var mockConfig = MockConfigration()
-        mockConfig.statusCode = 400
-        mockConfig.payload = try! JSONEncoder().encode("Bad Request")
-        mockConfig.error = TestAPIError.message("Bad Request")
-        let session = mockAPIResponse(mockConfig)
+        let mockConfiguration = MockConfiguration.init()
+        mockConfiguration.setStatusCode(400)
+        mockConfiguration.setError("Bad Request")
+        mockConfiguration.setDataResponse(TestData.vehiclesJSON.data)
+        mockConfiguration.setAPIURL(ServiceLocator.vehicles())
+        let session = mockConfiguration.mockAPIResponse()
         
         let expectation = self.expectation(description: "onError handler called")
-        let client = VehiclesClient(sessionManager: session, queryParameters: initQueryParameters())
+        let client = VehiclesClient(
+            sessionManager: session,
+            queryParameters: initQueryParameters())
         client.onSuccess = { (_: JSON?) -> Void in
             XCTFail("onSuccess should not have been called")
         }
@@ -73,109 +71,11 @@ class VehiclesClientTests: XCTestCase {
         wait(for: [expectation], timeout: 2.0)
     }
     
-    func testSetQueryParameters() {
-        var config = MockConfigration()
-        config.routes = "63"
-        
-        var queryParameters = initQueryParameters()
-        queryParameters.routes = "63"
-        
-        let session = mockAPIResponse(config)
-        
-        let expectation = self.expectation(description: "The correct query parameters were used.")
-        guard let expectedJSON = try? JSON(data: TestData.vehiclesJSON.data) else { return XCTFail("Failed to parse test JSON"); return }
-        
-        let client = VehiclesClient(sessionManager: session, queryParameters: VehicleQueryParameters())
-        client.onSuccess = { (actualResponse: JSON?) -> Void in
-            XCTAssertNotNil(actualResponse)
-            XCTAssertEqual(actualResponse, expectedJSON)
-            expectation.fulfill()
-        }
-        client.setQueryParameters(queryParameters)
-        client.fetch()
-        
-        wait(for: [expectation], timeout: 2.0)
-    }
     
-    // Test Helpers
-    
-    private enum TestAPIError: Error {
-        case message(String)
-    }
-    
-    private struct MockConfigration {
-        var statusCode = 200
-        var payload: Data = TestData.vehiclesJSON.data
-        var routes = "20,15"
-        var error: TestAPIError? = nil
-    }
-    
-    private func mockAPIResponse(_ config: MockConfigration) -> Session {
-        
-        let urlComponents = createURLComponents(config)
-        mockSessionWithComponents(config, urlComponents)
-        
-        let configuration = URLSessionConfiguration.af.default
-        configuration.protocolClasses = [MockingURLProtocol.self]
-        return Alamofire.Session(configuration: configuration)
-    }
-    
-    private func mockSessionWithComponents(_ config: MockConfigration, _ urlComponenets: URLComponents) {
-        let apiEndpoint = createURLFromComponents(urlComponenets)
-        
-        if let error = config.error {
-            Mock(
-                url: apiEndpoint,
-                ignoreQuery: false,
-                dataType: .json,
-                statusCode: config.statusCode,
-                data: [
-                    .get: config.payload
-                ],
-                requestError: error
-            ).register()
-        } else {
-            Mock(
-                url: apiEndpoint,
-                ignoreQuery: false,
-                dataType: .json,
-                statusCode: config.statusCode,
-                data: [
-                    .get: config.payload
-                ]
-            ).register()
-        }
-
-    }
-    
-    private func createURLComponents(_ config: MockConfigration) -> URLComponents {
-        var urlComponenets: URLComponents = ServiceLocator.vehicles()
-        urlComponenets.queryItems = [
-            URLQueryItem(name: "appID", value: "APIKEY"),
-            URLQueryItem(name: "routes", value: config.routes)
+    private func initQueryParameters() -> [String:String] {
+        return [
+            "appID": "APIKEY",
+            "routes": "20,15"
         ]
-        return urlComponenets
-    }
-    
-    private func initQueryParameters() -> VehicleQueryParameters {
-        var newParameters = VehicleQueryParameters()
-        newParameters.appID = "APIKEY"
-        newParameters.routes = "20,15"
-        return newParameters
-    }
-    
-    private func createURLFromComponents(_ components: URLComponents) -> URL {
-        let characterSet = NSCharacterSet(charactersIn: ",").inverted
-        return URL(
-            string: components.string!.addingPercentEncoding(
-                withAllowedCharacters: characterSet
-            )!
-        )!
-    }
-    
-    private func initAlamofireSessionManager() -> Session {
-        let configuration = URLSessionConfiguration.af.default
-        configuration.protocolClasses = [MockingURLProtocol.self]
-        return Alamofire.Session(configuration: configuration)
     }
 }

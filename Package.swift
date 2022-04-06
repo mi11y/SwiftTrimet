@@ -20,6 +20,7 @@ let package = Package(
         .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.4.0")),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "4.0.0"),
         .package(url: "https://github.com/WeTransfer/Mocker.git", .upToNextMajor(from: "2.3.0")),
+        .package(url: "https://github.com/mi11y/SwiftHelpers.git", branch: "main"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -27,10 +28,10 @@ let package = Package(
         .target(
             name: "SwiftTrimet",
             dependencies: ["Alamofire",
-                           "SwiftyJSON"]),
+                           "SwiftyJSON", "SwiftHelpers"]),
         .testTarget(
             name: "SwiftTrimetTests",
-            dependencies: ["SwiftTrimet", "Alamofire", "SwiftyJSON", "Mocker"],
+            dependencies: ["SwiftTrimet", "Alamofire", "SwiftyJSON", "Mocker", "SwiftHelpers"],
             resources: [
                 .copy("Resources/TrimetRoutesResponse.json"),
                 .copy("Resources/TrimetStopsResponse.json"),

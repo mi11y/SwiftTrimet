@@ -20,6 +20,15 @@
         }
       },
       {
+        "package": "SwiftHelpers",
+        "repositoryURL": "https://github.com/mi11y/SwiftHelpers.git",
+        "state": {
+          "branch": "main",
+          "revision": "17af807de1027067a69e6da7eeb0b2660fd87e83",
+          "version": null
+        }
+      },
+      {
         "package": "SwiftyJSON",
         "repositoryURL": "https://github.com/SwiftyJSON/SwiftyJSON.git",
         "state": {
